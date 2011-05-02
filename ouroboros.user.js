@@ -8,14 +8,14 @@
 // --------------------------------------------------------------------
 //
 // ==UserScript==
-// @name          Ouroboros
+// @name		  Ouroboros
 // @description   script enabling stats and extra stuff making work with Google Scholar better
-// @include       http://scholar.google.*/*
+// @include	   http://scholar.google.*/*
 // ==/UserScript==
 
 // CONSTANTS
 
-var serviceURL = "http://scholar.google.com";
+//var serviceURL = "http://scholar.google.com";
 var SHOW_CITED_PARAM_KEY = "cites"; // when this param exists, it means that request was made to show citing documents
 var SEARCH_IN_CITED_PARAM_KEY = "scipsc", // this param when equal to SEARCH_IN_CITED_PARAM_VALUE means that SEARCH was conducted in cited results
 	SEARCH_IN_CITED_PARAM_VALUE = "1";
@@ -83,27 +83,251 @@ function getXMLObject() {
 	}
 	return xmlHttp;// Mandatory Statement returning the ajax object created
 }
-
-var xmlhttp = new getXMLObject();//xmlhttp holds the ajax object
 */
+
+var xmlhttp = new XMLHttpRequest();//xmlhttp holds the ajax object
+
+/*
+if (typeof GM_deleteValue == 'undefined') {
+
+	GM_addStyle = function(css) {
+		var style = document.createElement('style');
+		style.textContent = css;
+		document.getElementsByTagName('head')[0].appendChild(style);
+	}
+
+	GM_deleteValue = function(name) {
+		localStorage.removeItem(name);
+	}
+
+	GM_getValue = function(name, defaultValue) {
+		var value = localStorage.getItem(name);
+		if (!value)
+			return defaultValue;
+		var type = value[0];
+		value = value.substring(1);
+		switch (type) {
+			case 'b':
+				return value == 'true';
+			case 'n':
+				return Number(value);
+			default:
+				return value;
+		}
+	}
+
+	GM_log = function(message) {
+		console.log(message);
+	}
+
+	GM_openInTab = function(url) {
+		return window.open(url, "_blank");
+	}
+
+	 GM_registerMenuCommand = function(name, funk) {
+	//todo
+	}
+
+	GM_setValue = function(name, value) {
+		value = (typeof value)[0] + value;
+		localStorage.setItem(name, value);
+	}
+}
+else {
+	GM_xmlhttpRequest = function(details) {
+		var xmlhttp = new XMLHttpRequest();
+		xmlhttp.onreadystatechange = function() {
+			var responseState = {
+				responseXML:(xmlhttp.readyState==4 ? xmlhttp.responseXML : ''),
+				responseText:(xmlhttp.readyState==4 ? xmlhttp.responseText : ''),
+				readyState:xmlhttp.readyState,
+				responseHeaders:(xmlhttp.readyState==4 ? xmlhttp.getAllResponseHeaders() : ''),
+				status:(xmlhttp.readyState==4 ? xmlhttp.status : 0),
+				statusText:(xmlhttp.readyState==4 ? xmlhttp.statusText : '')
+			}
+			if (details["onreadystatechange"]) {
+				details["onreadystatechange"](responseState);
+			}
+			if (xmlhttp.readyState==4) {
+				if (details["onload"] && xmlhttp.status>=200 && xmlhttp.status<300) {
+					details["onload"](responseState);
+				}
+				if (details["onerror"] && (xmlhttp.status<200 || xmlhttp.status>=300)) {
+					details["onerror"](responseState);
+				}
+			}
+		}
+		try {
+		  //cannot do cross domain
+		  xmlhttp.open(details.method, details.url);
+		} catch(e) {
+		  if( details["onerror"] ) {
+			//simulate a real error
+			details["onerror"]({responseXML:'',responseText:'',readyState:4,responseHeaders:'',status:403,statusText:'Forbidden'});
+		  }
+		  return;
+		}
+		if (details.headers) {
+			for (var prop in details.headers) {
+				xmlhttp.setRequestHeader(prop, details.headers[prop]);
+			}
+		}
+		xmlhttp.send((typeof(details.data)!='undefined')?details.data:null);
+	}
+}
+	*/
+
 // use this method for asynchronous communication
+var sorryRe = /.*?\/sorry\/.*?/;
+var userAgents = [
+"1st ZipCommander (Net) - http://www.zipcommander.com/",
+"Ace Explorer",
+"ActiveWorlds/3.xx (xxx)",
+"Advanced Browser (http://www.avantbrowser.com)",
+"Amiga-AWeb/3.4.167SE",
+"AmigaVoyager/3.4.4 (MorphOS/PPC native)",
+"Amoi 8512/R21.0 NF-Browser/3.3",
+"ANTFresco/x.xx",
+"AUDIOVOX-SMT5600",
+"Avant Browser (http://www.avantbrowser.com)",
+"AWeb",
+"BackStreet Browser 3.x",
+"Biyubi/x.x (Sistema Fenix; G11; Familia Toledo; es-mx)",
+"BlackBerry7520/4.0.0 Profile/MIDP-2.0 Configuration/CLDC-1.1 UP.Browser/5.0.3.3 UP.Link/5.1.2.12 (Google WAP Proxy/1.0)",
+"CDR/1.7.1 Simulator/0.7(+http://timewe.net) Profile/MIDP-1.0 Configuration/CLDC-1.0",
+"CERN-LineMode/2.15",
+"Commerce Browser Center",
+"Cooliris/1.5 CFNetwork/459 Darwin/10.0.0d3",
+"Cricket-A100/1.0 UP.Browser/6.3.0.7 (GUI) MMP/2.0",
+"Cuam Ver0.050bx",
+"Cyberdog/2.0 (Macintosh; 68k)",
+"Dillo/0.8.5-i18n-misc",
+"Dillo/0.x.x",
+"DISCo Pump x.x",
+"DocZilla/1.0 (Windows; U; WinNT4.0; en-US; rv:1.0.0) Gecko/20020804",
+"DonutP; Windows98SE",
+"eCatch/3.0",
+"ELinks (0.x.x; Linux 2.4.20 i586; 132x60)",
+"ELinks/0.x.x (textmode; NetBSD 1.6.2 sparc; 132x43)",
+"Express WebPictures (www.express-soft.com)",
+"GenesisBrowser (HTTP 1.1; 0.9; XP SP2; .NET CLR 2.0.50727)",
+"GreenBrowser",
+"Haier-T10C/1.0 iPanel/2.0 WAP2.0 (compatible; UP.Browser/6.2.2.4; UPG1; UP/4.0; Embedded)",
+"HotJava/1.0.1/JRE1.1.x",
+"httpunit/1.5",
+"httpunit/1.x",
+"IBrowse/2.2 (AmigaOS 3.5)",
+"IBrowse/2.2 (Windows 3.1)",
+"iCab/2.5.2 (Macintosh; I; PPC)",
+"ICE Browser/5.05 (Java 1.4.0; Windows 2000 5.0 x86)",
+"K-Meleon/0.6 (Windows; U; Windows NT 5.1; en-US; rv:0.9.5) Gecko/20011011",
+"Kazehakase/0.x.x.[x]",
+"Klondike/1.50 (WSP Win32) (Google WAP Proxy/1.0)",
+"LG-LX260 POLARIS-LX260/2.0 MMP/2.0 Profile/MIDP-2.0 Configuration/CLDC-1.1",
+"LG/U8138/v1.0",
+"Lincoln State Web Browser",
+"Links (0.9x; Linux 2.4.7-10 i686)",
+"Links (0.9xpre12; Linux 2.2.14-5.0 i686; 80x24)",
+"Links (2.xpre7; Linux 2.4.18 i586; x)",
+"Lotus-Notes/4.5 ( Windows-NT )",
+"Lunascape",
+"Lynx/2-4-2 (Bobcat/0.5 [DOS] Jp Beta04)",
+"Lynx/2.6 libwww-FM/2.14",
+"Lynx/2.8 (;http://seebot.org)",
+"Lynx/2.8.3dev.9 libwww-FM/2.14 SSL-MM/1.4.1 OpenSSL/0.9.6",
+"Lynx/2.8.4rel.1 libwww-FM/2.14 SSL-MM/1.4.1 OpenSSL/0.9.6c (human-guided@lerly.net)",
+"MoonBrowser (version 0.41 Beta4)",
+"Motorola-V3m Obigo",
+"Mozilla/1.10 [en] (Compatible; RISC OS 3.70; Oregano 1.10)",
+"Mozilla/1.22 (compatible; MSIE 5.01; PalmOS 3.0) EudoraWeb 2",
+"Mozilla/3.0 (compatible; AvantGo 3.2)",
+"Mozilla/3.0 (compatible; NetPositive/2.2)",
+"Mozilla/3.0 (Planetweb/2.100 JS SSL US; Dreamcast US)",
+"Mozilla/3.01 (compatible; AmigaVoyager/2.95; AmigaOS/MC680x0)",
+"Mozilla/3.04 (compatible; ANTFresco/2.13; RISC OS 4.02)",
+"Mozilla/3.04 (compatible; NCBrowser/2.35; ANTFresco/2.17; RISC OS-NC 5.13 Laz1UK1309)",
+"Mozilla/3.04 (compatible;QNX Voyager 2.03B ;Photon)",
+"Mozilla/4.0 (compatible; ibisBrowser)",
+"Mozilla/4.0 (compatible; Lotus-Notes/5.0; Windows-NT)",
+"Mozilla/4.0 (compatible; MSIE 4.01; Windows CE; MSN Companion 2.0; 800x600; Compaq)",
+"Mozilla/4.0 (compatible; MSIE 4.01; Windows NT Windows CE)",
+"Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0; NetCaptor 6.5.0RC1)",
+"Mozilla/4.0 (compatible; MSIE 5.5; Windows 98; Crazy Browser 1.x.x)",
+"Mozilla/4.0 (compatible; MSIE 5.5; Windows 98; SAFEXPLORER TL)",
+"Mozilla/4.0 (compatible; MSIE 5.5; Windows 98; SYMPA; Katiesoft 7; SimulBrowse 3.0)",
+"Mozilla/4.0 (compatible; MSIE 6.0; Windows 98; Win 9x 4.90; http://www.Abolimba.de)",
+"Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0; .NET CLR 1.1.4322; Lunascape 2.1.3)",
+"Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; Deepnet Explorer)",
+"Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; iRider 2.21.1108; FDM)",
+"Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; KKman3.0)",
+"Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; Maxthon)",
+"Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; Embedded Web Browser from: http://bsalsa.com/; MSIECrawler)",
+"Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; DX-Browser 5.0.0.0)",
+"Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0; Trident/4.0; Orange 8.0; GTB6.3; Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1) ; Embedded Web Browser from: http://bsalsa.com/; SLCC1; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30618; OfficeLiveConnector.1.3; OfficeLivePatch.1.3)",
+"Mozilla/4.0 (compatible; SiteKiosk 4.0; MSIE 5.0; Windows 98; SiteCoach 1.0)",
+"Mozilla/4.5 (compatible; HTTrack 3.0x; Windows 98)",
+"Mozilla/4.5 (compatible; iCab 2.5.3; Macintosh; I; PPC)",
+"Mozilla/4.5 (compatible; OmniWeb/4.0.5; Mac_PowerPC)",
+"Mozilla/4.5 (compatible; OmniWeb/4.1-beta-1; Mac_PowerPC)",
+"Mozilla/4.61 [en] (X11; U; ) - BrowseX (2.0.0 Windows)",
+"Mozilla/4.7 (compatible; OffByOne; Windows 98) Webster Pro V3.2",
+"Mozilla/5.0 (Macintosh; U; PPC Mac OS X Mach-O; en-US; rv:1.0.1) Gecko/20021219 Chimera/0.6",
+"Mozilla/5.0 (Macintosh; U; PPC Mac OS X Mach-O; en-US; rv:1.0.1) Gecko/20030306 Camino/0.7",
+"Mozilla/5.0 (Macintosh; U; PPC Mac OS X; en-US) AppleWebKit/xx (KHTML like Gecko) OmniWeb/v5xx.xx",
+"Mozilla/5.0 (Macintosh; U; PPC Mac OS X; en-us) AppleWebKit/xxx.x (KHTML like Gecko) Safari/12x.x",
+"Mozilla/5.0 (Windows; U; Win98; en-US; rv:x.xx) Gecko/20030423 Firebird Browser/0.6",
+"Mozilla/5.0 (Windows; U; Win9x; en; Stable) Gecko/20020911 Beonex/0.8.1-stable",
+"Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/525.19 (KHTML, like Gecko) Chrome/0.2.153.1 Safari/525.19",
+"Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.0.5) Gecko/20060731 Firefox/1.5.0.5 Flock/0.7.4.1",
+"Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008092215 Firefox/3.0.1 Orca/1.1 beta 3",
+"Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:x.x.x) Gecko/20041107 Firefox/x.x",
+"Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:x.xx) Gecko/20030504 Mozilla Firebird/0.6",
+"Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:x.xxx) Gecko/20041027 Mnenhy/0.6.0.104",
+"Mozilla/5.0 (X11; Linux i686; U;rv: 1.7.13) Gecko/20070322 Kazehakase/0.4.4.1",
+"Mozilla/5.0 (X11; U; Linux i686; de-AT; rv:1.8.0.2) Gecko/20060309 SeaMonkey/1.0",
+"Mozilla/5.0 (X11; U; Linux i686; en-GB; rv:1.7.6) Gecko/20050405 Epiphany/1.6.1 (Ubuntu) (Ubuntu package 1.0.2)",
+"Mozilla/5.0 (X11; U; Linux i686; en-US; Nautilus/1.0Final) Gecko/20020408",
+"Mozilla/5.0 (X11; U; Linux i686; en-US; rv:0.9.3) Gecko/20010801",
+"Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.2b) Gecko/20021007 Phoenix/0.3",
+"Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.6) Gecko/20040413 Epiphany/1.2.1",
+"Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.1) Gecko/20061129 BonEcho/2.0",
+"Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.1.1) Gecko/20061205 Iceweasel/2.0.0.1 (Debian-2.0.0.1+dfsg-2)",
+"Mozilla/5.0 Galeon/1.0.2 (X11; Linux i686; U;) Gecko/20011224",
+"multiBlocker browser",
+"NETCOMplete/x.xx",
+"Opera/9.0 (Windows NT 5.1; U; en)",
+"Opera/9.60 (Windows NT 5.1; U; de) Presto/2.1.1",
+"Orca Browser (http://www.orcabrowser.com)",
+"portalmmm/2.0 S500i(c20;TB)",
+"Science Traveller International 1X/1.0",
+"SoftBank/1.0/812SH/SHJ001 Browser/NetFront/3.3 Profile/MIDP-2.0 Configuration/CLDC-1.1",
+"SWB/V1.4 (HP)",
+"Sylera/1.2.x",
+"T-Online Browser",
+"UCWEB5.1",
+"UP.Browser/3.01-IG01 UP.Link/3.2.3.4",
+"UPG1 UP/4.0 (compatible; Blazer 1.0)",
+"w3m/0.x.xx",
+"WannaBe (Macintosh; PPC)",
+"WapOnWindows 1.0",
+"WeBoX/0.xx",
+"Website Explorer/0.9.x.x",
+"webster-internet.de pad browser",
+"WinWAP/3.x (3.x.x.xx; Win32) (Google WAP Proxy/1.0)"
+];
 function doRequest(params, callback) {
-	params = serviceURL + normalizeLink(params);
-	GM_log("Requesting: " + params);
+	params = "http://" + serviceURL + normalizeLink(params);
+	var userAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
+	GM_log("Requesting: " + params + "\nwith user agent: " + userAgent);
 	GM_xmlhttpRequest({
-		method: "GET",
+		method: "POST",
 		url: params,
 		headers: {
-			//"User-Agent": "Mozilla/5.0",
+			"User-Agent": userAgent,
 			"Accept": "text/xml",
 			"Content-Type": "application/x-www-form-urlencoded"
 		},
 		onload: function(response) {
-			updateRequestCount(1);
-			// Inject responseXML into existing Object if not present
-			if (!response.responseXML) {
-				response.responseXML = new DOMParser().parseFromString(response.responseText, "text/xml");
-			}
 			GM_log([
 				response.status,
 				response.statusText,
@@ -113,18 +337,29 @@ function doRequest(params, callback) {
 				response.finalUrl,
 				response.responseXML
 			].join("\n"));
-			callback(response.responseText);
+			updateRequestCount(1);
+			// Inject responseXML into existing Object if not present
+			if (!response.responseXML) {
+				response.responseXML = new DOMParser().parseFromString(response.responseText, "text/xml");
+			}
+			if(response.status == 200) {
+				callback(response.responseText);
+			}
+			else if(sorryRe.exec(response.finalUrl)) {
+				var sorryDiv = document.createElement("div");
+				sorryDiv.setAttribute("id", "sorryDiv");
+				sorryDiv.innerHTML = response.responseText;
+				sorryDiv.setAttribute("style", "display: block; position: fixed; top: 10px; z-index: 99;");
+				document.appendChild(sorryDiv);
+			}
 		}
 	});
 	/*
 	if (xmlhttp) {
-		params = normalizeLink(params);
-		//var URL = "http://127.0.0.1:7101/UoP-Ouroboros-context-root/servlet/ReferenceCounter?" + params;
-		GM_log("Requesting: " + serviceURL + params);
 		xmlhttp.open("POST", serviceURL + params, true);
 		xmlhttp.onreadystatechange = function () {
 			if (xmlhttp.readyState == 4) {
-				
+				updateRequestCount(1);
 				if (xmlhttp.status == 200) {
 					callback(xmlhttp.responseText);
 				}
@@ -178,13 +413,6 @@ function clusterLinkToCitedLink(clusterLink, bibtexInfoParam) {
 	return clusterLink.replace("cluster", "cites") + "&" + bibtexLinkParamKey + "=" + bibtexInfoParam;// + "&" + SEARCH_IN_CITED_PARAM_KEY + "=" + SEARCH_IN_CITED_PARAM_VALUE;
 }
 
-function relatedLinkToBibtexLink(relatedLink) {
-	relatedLink = relatedLink.replace(/:scholar\.google\.com\//, ":scholar.google.com/&output=citation");
-	relatedLink = relatedLink.replace(/q=related/, "q=info");
-	relatedLink = relatedLink.replace(/.*?\/scholar\?/, BIBTEX_URL);
-	return relatedLink;
-}
-
 function updateRequestCount(addToCount) {
 	//update the global request counter
 	totalRequestCounter += addToCount * 1;
@@ -234,6 +462,7 @@ function sign() {
 
 // function that actually fetches the citation count and shows it in the placeholder.
 // params: bibtex link (i.e. http%3A%2F%2Fscholar.google.com%2F%2Fscholar.bib%3Fq%3Dinfo%3AYtSImgx2GVsJ%3Ascholar.google.com%2F%26output%3Dcitation%26amp%3Bhl%3Del%26amp%3Boe%3DGreek%26amp%3Bas_sdt%3D0%2C5), cited link (i.e. %2Fscholar%3Fcites%3D6564407728373552226%26amp%3Bas_sdt%3D2005%26amp%3Bsciodt%3D0%2C5%26amp%3Bhl%3Del%26amp%3Boe%3DGreek), placeholder element id (should be added, it doesn't exist by default)
+var resultsOnPageRe = /(.*?)&num=[0-9]*?(.*?)/;
 function fetchReferenceCounters(bibtexLink, citedLink, totalCited, whenDone) {
 	GM_log("Fetching ref counts for: " + bibtexLink + ", " + citedLink + ", " + totalCited);
 	//the first request will respond with a bibtex block containing the authors
@@ -247,13 +476,16 @@ function fetchReferenceCounters(bibtexLink, citedLink, totalCited, whenDone) {
 				selfRefQuery += (i > 0? " OR " : "") + "author:\"" + authors[i] + "\"";
 				heteroRefQuery += " -author:\"" + authors[i] + "\"";
 			}
+			//make sure it doesn't request for a huge page of 100 results, out of it, we just need one stupid number on the top
+			citedLink = citedLink.replace(resultsOnPageRe, "$1&num=10$2");
+			GM_log('Check out the num amount (should be inependent from the number of results from the preferences): ' + citedLink)
 			//create links for self-hetero-referencing citations
 			var heteroRefLink = citedLink + "&" + SEARCH_IN_CITED_PARAM_KEY + "=" + SEARCH_IN_CITED_PARAM_VALUE + "&xtype=hetero&q=" + encodeURI(heteroRefQuery);
 			var selfRefLink = citedLink + "&" + SEARCH_IN_CITED_PARAM_KEY + "=" + SEARCH_IN_CITED_PARAM_VALUE + "&xtype=self&q=" + encodeURI(selfRefQuery);
 			//citedLinksArray.push(heteroRefLink);
 			doRequest(heteroRefLink, function (heteroCitedContext) {
 				var heteroReferences = extractResultCountFromPage(heteroCitedContext);
-				//total cited will be given 'null' when the call comes from enhanceCitedPage
+				//total cited will be 'null' when the call comes from enhanceCitedPage
 				if(totalCited != null) {
 					var selfReferences = (totalCited * 1) - heteroReferences;
 					GM_log("total references: " + totalCited + "\nself referencing quotes: " + selfReferences + "\nhetero referencing quotes: " + heteroReferences);
@@ -302,7 +534,7 @@ function traverseMatches() {
 
 // parse the page to locate all cited-related links (bibtext and cited are the ones needed), query up self/hetero citations and show the stats
 var matchArray;
-function addSelfReferencingCountsToAllResults(content) {
+function addReferenceCountsToResults(content) {
 	//show spinner to indicate busy
 	document.body.innerHTML = content.replace(totalCitesRe, "$1$2&" + bibtexLinkParamKey + "=$6$4 <span id='" + statsPlaceholder + "$3'>" + placeholder + "</span>$5$6$7");
 	matchArray = new Array();
@@ -380,7 +612,7 @@ function enhanceCitedPage(queryString) {
 	var clusterLinkRe = new RegExp("\"([^\"]*cluster=" + getParam(queryString, "cites") + ".*?)\"");
 	var clusterLink = clusterLinkRe.exec(document.body.innerHTML)[1];
 	if(bibtexInfoParam != null) {
-		var bibtexLink = "/scholar.bib?q=info:" + bibtexInfoParam + ":scholar.google.com/&output=citation";
+		var bibtexLink = "/scholar.bib?q=info:" + bibtexInfoParam + ":" + serviceURL + "/&output=citation";
 		fetchReferenceCounters(bibtexLink, clusterLinkToCitedLink(clusterLink, bibtexInfoParam), null, function (heteroReferences, heteroRefLink, selfReferences, selfRefLink, authors) {
 			onStatsFetched(clusterLinkToCitedLink(clusterLink, bibtexInfoParam), heteroReferences, heteroRefLink, selfReferences, selfRefLink, exclusiveSearchType, authors, startAt);
 		});
@@ -404,6 +636,8 @@ var totalRequestCounter = getTotalRequestCounter();
 sign();
 //get query string params
 var queryString = window.top.location.search.substring(1);
+var addressRe = /http:\/\/(.*?)\//;
+var serviceURL = addressRe.exec(window.top.location.href)[1];
 var searchingInCited = getParam(queryString, SHOW_CITED_PARAM_KEY) != null;
 // if the page loaded is cited results, then show stats and filters right on the page, plus paint results to distinguish hetero and self references
 if(searchingInCited) {
@@ -411,5 +645,5 @@ if(searchingInCited) {
 }
 // if the page loaded is search results (not cited results), then just add counters with links to each row
 else {
-	addSelfReferencingCountsToAllResults(document.body.innerHTML);
+	addReferenceCountsToResults(document.body.innerHTML);
 }
