@@ -333,7 +333,7 @@ function doRequest(params, callback) {
 				response.statusText,
 				response.readyState,
 				response.responseHeaders,
-				response.responseText,
+				//response.responseText,
 				response.finalUrl,
 				response.responseXML
 			].join("\n"));
@@ -373,6 +373,19 @@ function doRequest(params, callback) {
 		xmlhttp.send(null);
 	}
 	*/
+}
+/**
+ * An alternative (perhaps preferable) way to request STRUCTURED data that can be returned in the JSON format. Would be nice if it was possible to get the Bibtex this way.
+ * Done via JS injection while also providing with a cross-origin resource sharing workaround (http://en.wikipedia.org/wiki/JSONP)
+ */
+var head = document.getElementsByTagName("head")[0];
+var scriptInjection = document.createElement("script");
+function requestViaJSONP(params, callback) {
+	params = "http://" + serviceURL + normalizeLink(params) + "&jsonp=" + callback;
+	GM_log('request via injection from: ' + params);
+	scriptInjection.type = 'text/javascript';
+	scriptInjection.src = params;
+	head.appendChild(scriptInjection);
 }
 
 function doArraysIntersect(first, second) {
@@ -467,6 +480,7 @@ function fetchReferenceCounters(bibtexLink, citedLink, totalCited, whenDone) {
 	GM_log("Fetching ref counts for: " + bibtexLink + ", " + citedLink + ", " + totalCited);
 	//the first request will respond with a bibtex block containing the authors
 	doRequest(bibtexLink, function (bibtexContext) {
+		//GM_log('' + bibtexContext);
 		//response contains a bibtex syntax extract. need to retrieve authors from there and then query up the citations.
 		var authors = extractAuthorsFromBibtexContext(bibtexContext);
 		if(authors) {
@@ -612,7 +626,7 @@ function enhanceCitedPage(queryString) {
 	var clusterLinkRe = new RegExp("\"([^\"]*cluster=" + getParam(queryString, "cites") + ".*?)\"");
 	var clusterLink = clusterLinkRe.exec(document.body.innerHTML)[1];
 	if(bibtexInfoParam != null) {
-		var bibtexLink = "/scholar.bib?q=info:" + bibtexInfoParam + ":" + serviceURL + "/&output=citation";
+		var bibtexLink = "/scholar.bib?q=info:" + bibtexInfoParam + ":" + serviceURL + "/&output=citation&hl=el&as_sdt=0&sciodt=0&ct=citation&cd=0";
 		fetchReferenceCounters(bibtexLink, clusterLinkToCitedLink(clusterLink, bibtexInfoParam), null, function (heteroReferences, heteroRefLink, selfReferences, selfRefLink, authors) {
 			onStatsFetched(clusterLinkToCitedLink(clusterLink, bibtexInfoParam), heteroReferences, heteroRefLink, selfReferences, selfRefLink, exclusiveSearchType, authors, startAt);
 		});
