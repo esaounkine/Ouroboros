@@ -86,8 +86,7 @@ function getXMLObject() {
 */
 
 var xmlhttp = new XMLHttpRequest();//xmlhttp holds the ajax object
-
-/*
+//add GM support to Chrome
 if (typeof GM_deleteValue == 'undefined') {
 
 	GM_addStyle = function(css) {
@@ -175,7 +174,6 @@ else {
 		xmlhttp.send((typeof(details.data)!='undefined')?details.data:null);
 	}
 }
-	*/
 
 // use this method for asynchronous communication
 var sorryRe = /.*?\/sorry\/.*?/;
