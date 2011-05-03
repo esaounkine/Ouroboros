@@ -331,7 +331,7 @@ function doRequest(params, callback) {
 				response.statusText,
 				response.readyState,
 				response.responseHeaders,
-				response.responseText,
+				//response.responseText,
 				response.finalUrl,
 				response.responseXML
 			].join("\n"));
